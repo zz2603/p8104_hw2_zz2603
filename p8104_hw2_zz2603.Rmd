@@ -8,18 +8,123 @@ output: github_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
+library(tidyverse)
+library(readxl)
 
 ```
 
 
+# Problem 1
+## Mr. Trash Wheel
+```{r Mr. Trash Wheel}
+MRtrashW <- read_excel(
+  "./data/HealthyHarborWaterWheelTotals2018-7-28.xlsx",
+  sheet = "Mr. Trash Wheel") %>% 
+  janitor::clean_names() %>% select(-x15) %>% drop_na(dumpster)
 
+MRtrashW[,13] <- round(MRtrashW[,13],digits = 0)
+
+sball_int <- as.integer(pull(MRtrashW,sports_balls))
+
+```
+
+## Total precipitation in 2017 and 2018 
+```{r 2017, 2018 precipitation}
+## 2017
+precip17 <- read_excel(
+  "./data/HealthyHarborWaterWheelTotals2018-7-28.xlsx",
+  sheet="2017 Precipitation"
+)
+colnames(precip17) <- c("month", "total")
+precip17 <- precip17[-1,] %>% drop_na(total)
+precip17 <- mutate(precip17, year = c(rep(2017,dim(precip17)[1]-1),NA))
+
+precip17 <- precip17[,c(3,1,2)]
+
+## 2018
+precip18 <- read_excel(
+  "./data/HealthyHarborWaterWheelTotals2018-7-28.xlsx",
+  sheet="2018 Precipitation"
+)
+colnames(precip18) <- c("month", "total")
+precip18 <- precip18[-1,] %>% drop_na(total)
+precip18 <- mutate(precip18, year = c(rep(2018,dim(precip18)[1]-1),NA))
+precip18 <- precip18[,c(3,1,2)]
+
+## set a character vector of month name from Jan to Dec
+monthname<- month.name
+
+## bind two datasets together
+precip1718 <- bind_rows(precip17,precip18)
+precip1718[,2] <- monthname[as.numeric(pull(precip1718,month))]
+
+```
+
+## paragraph
+We imported the Mr. Trash Wheel and precipitation in 2017 and 2018 from the excel file *HealthyHarborWaterWheelTotals2018-7-28.xlsx*. In the dataset of Mr. Trash Wheel, there are `r dim(MRtrashW)[1]` observations left after we removed observations without specific dumpster number. We also rounds the number of sport balls in each dumpster into integer. The median of sport balls is `r median(pull(filter(MRtrashW,year==2017),sports_balls))`. In the dataset of precipitation in 2017, there are `r dim(precip17)[1]` observations left after we omitted observations without any data of precipitation. In the dataset of precipitation in 2018, there are `r dim(precip18)[1]` left after we omitted observations without any precipitation data. (We also count the value of total precipitation at the last row in each dataset.) After we combine them together, there are `r dim(precip1718)` observations in total. The total precipitation in 2018 is `r as.numeric(pull(precip18,total))[8]`. In these two resulting datasets, I think key variables includes month, year, total precipitation, variables of trash (i.e. sports balls), because the amount of precipitation can help us determine the strength and number of storms each month and year. Then, we can use precipitation to see how storm affect the amount of trash each month and year.    
+
+# Problem 2
+## pol-month.csv
+```{r}
+polmonth <- read_csv("./data/pols-month.csv") %>% janitor::clean_names() %>%
+  separate(col=mon,into = c("year","month","day"),sep = "-")
+
+polmonth[,1] <- as.integer(pull(polmonth,year))
+polmonth[,2] <- as.integer(pull(polmonth,month))
+polmonth[,3] <- as.integer(pull(polmonth,day))
+
+polmonth[,2] <- monthname[pull(polmonth,month)]
+
+polmonth <- pivot_longer(polmonth,
+                    c(prez_gop,prez_dem),
+                    names_to = "president",
+                    names_prefix = "prez_") %>% select(-day)
+```
+
+## snp.csv
+```{r}
+snp <- read_csv("./data/snp.csv") %>% janitor::clean_names() %>% 
+  separate(col=date,into = c("month","day","year"),sep = "/")
+
+snp[,1] <- as.integer(pull(snp,month))
+snp[,2] <- as.integer((pull(snp,day)))
+snp[,3] <- as.integer((pull(snp,year)))
+
+snp <- snp[,c(3,1,2,4)]
+
+snp[,2] <- monthname[pull(snp,month)]
+
+snp <- select(snp,-day)
+
+```
+
+## unemployment.csv
+```{r}
+unemploy <- read_csv("./data/unemployment.csv") %>% 
+  pivot_longer(
+    Jan:Dec,
+    names_to = "month",
+    values_to = "unemployment_rate"
+  ) %>% janitor::clean_names()
+
+monthabb <- month.abb
+## convert abbreviation into number
+unemploy[,2] <- match(pull(unemploy,month),monthabb)
+## convert number into full names of months
+unemploy[,2] <- monthname[pull(unemploy,month)]
+
+```
+
+## merge pols, snp and unemployment togather
+### set a key variable
+Since every dataset has variable year and month, we can merge three datasets by setting either year or month as key variable. We can also combine year and month together into variable date and set date as key variable.
 ```{r}
 
+
+
+
 ```
 
 
 
-```{r}
-
-```
 
