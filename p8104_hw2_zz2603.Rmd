@@ -66,7 +66,8 @@ We imported the Mr. Trash Wheel and precipitation in 2017 and 2018 from the exce
 # Problem 2
 ## pol-month.csv
 ```{r}
-polmonth <- read_csv("./data/pols-month.csv") %>% janitor::clean_names() %>%
+polmonth <- read_csv("./data/pols-month.csv") %>% 
+  janitor::clean_names() %>%
   separate(col=mon,into = c("year","month","day"),sep = "-")
 
 polmonth[,1] <- as.integer(pull(polmonth,year))
@@ -116,15 +117,20 @@ unemploy[,2] <- monthname[pull(unemploy,month)]
 ```
 
 ## merge pols, snp and unemployment togather
-### set a key variable
-Since every dataset has variable year and month, we can merge three datasets by setting either year or month as key variable. We can also combine year and month together into variable date and set date as key variable.
+```{r}
+pol_merg_snp <- left_join(x=polmonth,y=snp,by=c("year","month")) 
+
+pol_merg_snp_merg_unemploy <- left_join(
+  x=pol_merg_snp,
+  y=unemploy,
+  by=c("year","month")
+)
+```
+### paragraph
+The dataset of pols-month contains `r dim(polmonth)[1]` rows and `r dim(polmonth)[2]` columns in total. The year ranged from `r min(pull(polmonth,year))` to `r max(pull(polmonth,month))`. The key variables that we used to merge (left join) is *year* and *month* (first by year, then by month). The variables *president* indicate if he/she is belong to republican and democratic. The dataset of snp contains `r dim(snp)[1]` rows and `r dim(snp)[2]` columns in total. The year ranged from `r min(pull(snp,year))` to `r max(pull(snp,year))`. Besides *year* and *month*, the variable *close* are also important because it indicates the closing values of the S&P stock index on the associated date. The dataset of unemployment contains `r dim(unemploy)[1]` rows and `r dim(unemploy)[2]` columns in total. The year ranged from `r min(pull(unemploy,year))` to `r max(pull(unemploy,year))`. the new variable *unemployment rate* is created to represent the values of percentage of unemployment. The final merged dataset contains `r dim(pol_merg_snp_merg_unemploy)[1]` rows and `r dim(pol_merg_snp_merg_unemploy)[2]` columns. The year ranged from `r min(pull(pol_merg_snp_merg_unemploy,year))` to ` r max(pull(pol_merg_snp_merg_unemploy,year))`. There are some NA created under variables *close* and *unemployment rate* during merging datasets.  
+
 ```{r}
 
-
-
-
 ```
-
-
 
 
