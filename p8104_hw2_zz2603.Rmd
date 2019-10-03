@@ -18,9 +18,9 @@ library(readxl)
 ## Mr. Trash Wheel
 ```{r Mr. Trash Wheel}
 MRtrashW <- read_excel(
-  "./data/HealthyHarborWaterWheelTotals2018-7-28.xlsx",
+  "./data/Trash-Wheel-Collection-Totals-8-6-19.xlsx",
   sheet = "Mr. Trash Wheel") %>% 
-  janitor::clean_names() %>% select(-x15) %>% drop_na(dumpster)
+  janitor::clean_names() %>% select(-c(x15:x17)) %>% drop_na(dumpster)
 
 MRtrashW[,13] <- round(MRtrashW[,13],digits = 0)
 
@@ -32,7 +32,7 @@ sball_int <- as.integer(pull(MRtrashW,sports_balls))
 ```{r 2017, 2018 precipitation}
 ## 2017
 precip17 <- read_excel(
-  "./data/HealthyHarborWaterWheelTotals2018-7-28.xlsx",
+  "./data/Trash-Wheel-Collection-Totals-8-6-19.xlsx",
   sheet="2017 Precipitation"
 )
 colnames(precip17) <- c("month", "total")
@@ -43,7 +43,7 @@ precip17 <- precip17[,c(3,1,2)]
 
 ## 2018
 precip18 <- read_excel(
-  "./data/HealthyHarborWaterWheelTotals2018-7-28.xlsx",
+  "./data/Trash-Wheel-Collection-Totals-8-6-19.xlsx",
   sheet="2018 Precipitation"
 )
 colnames(precip18) <- c("month", "total")
@@ -52,16 +52,16 @@ precip18 <- mutate(precip18, year = c(rep(2018,dim(precip18)[1]-1),NA))
 precip18 <- precip18[,c(3,1,2)]
 
 ## set a character vector of month name from Jan to Dec
+## in fact, it's unnecessary.
 monthname<- month.name
 
 ## bind two datasets together
 precip1718 <- bind_rows(precip17,precip18)
 precip1718[,2] <- monthname[as.numeric(pull(precip1718,month))]
-
 ```
 
 ## paragraph
-We imported the Mr. Trash Wheel and precipitation in 2017 and 2018 from the excel file *HealthyHarborWaterWheelTotals2018-7-28.xlsx*. In the dataset of Mr. Trash Wheel, there are `r dim(MRtrashW)[1]` observations left after we removed observations without specific dumpster number. We also rounds the number of sport balls in each dumpster into integer. The median of sport balls is `r median(pull(filter(MRtrashW,year==2017),sports_balls))`. In the dataset of precipitation in 2017, there are `r dim(precip17)[1]` observations left after we omitted observations without any data of precipitation. In the dataset of precipitation in 2018, there are `r dim(precip18)[1]` left after we omitted observations without any precipitation data. (We also count the value of total precipitation at the last row in each dataset.) After we combine them together, there are `r dim(precip1718)` observations in total. The total precipitation in 2018 is `r as.numeric(pull(precip18,total))[8]`. In these two resulting datasets, I think key variables includes month, year, total precipitation, variables of trash (i.e. sports balls), because the amount of precipitation can help us determine the strength and number of storms each month and year. Then, we can use precipitation to see how storm affect the amount of trash each month and year.    
+We imported the Mr. Trash Wheel and precipitation in 2017 and 2018 from the excel file *Trash-Wheel-Collection-Totals-8-6-19.xlsx*. In the dataset of Mr. Trash Wheel, there are `r dim(MRtrashW)[1]` observations left after we removed observations without specific dumpster number. We also rounds the number of sport balls in each dumpster into integer. The median of sport balls is `r median(pull(filter(MRtrashW,year==2017),sports_balls))`. In the dataset of precipitation in 2017, there are `r dim(precip17)[1]` observations left after we omitted observations without any data of precipitation. In the dataset of precipitation in 2018, there are `r dim(precip18)[1]` observations left after we omitted observations without any precipitation data. (We also count the value of total precipitation at the last row in each dataset.) After we combine them together, there are `r dim(precip1718)[1]` observations in total. The total precipitation in 2018 is `r as.numeric(pull(precip18,total))[13]`. In these two resulting datasets, I think key variables includes month, year, total precipitation, variables of trash (i.e. sports balls), because the amount of precipitation can help us determine the strength and number of storms each month and year. Then, we can use precipitation to see how storm affect the amount of trash each month and year.    
 
 # Problem 2
 ## pol-month.csv
@@ -79,7 +79,11 @@ polmonth[,2] <- monthname[pull(polmonth,month)]
 polmonth <- pivot_longer(polmonth,
                     c(prez_gop,prez_dem),
                     names_to = "president",
-                    names_prefix = "prez_") %>% select(-day)
+                    names_prefix = "prez_") %>% 
+  select(-day) %>%
+  filter(value!=0) %>% 
+  select(-value)
+  
 ```
 
 ## snp.csv
@@ -127,8 +131,9 @@ pol_merg_snp_merg_unemploy <- left_join(
 )
 ```
 ### paragraph
-The dataset of pols-month contains `r dim(polmonth)[1]` rows and `r dim(polmonth)[2]` columns in total. The year ranged from `r min(pull(polmonth,year))` to `r max(pull(polmonth,month))`. The key variables that we used to merge (left join) is *year* and *month* (first by year, then by month). The variables *president* indicate if he/she is belong to republican and democratic. The dataset of snp contains `r dim(snp)[1]` rows and `r dim(snp)[2]` columns in total. The year ranged from `r min(pull(snp,year))` to `r max(pull(snp,year))`. Besides *year* and *month*, the variable *close* are also important because it indicates the closing values of the S&P stock index on the associated date. The dataset of unemployment contains `r dim(unemploy)[1]` rows and `r dim(unemploy)[2]` columns in total. The year ranged from `r min(pull(unemploy,year))` to `r max(pull(unemploy,year))`. the new variable *unemployment rate* is created to represent the values of percentage of unemployment. The final merged dataset contains `r dim(pol_merg_snp_merg_unemploy)[1]` rows and `r dim(pol_merg_snp_merg_unemploy)[2]` columns. The year ranged from `r min(pull(pol_merg_snp_merg_unemploy,year))` to ` r max(pull(pol_merg_snp_merg_unemploy,year))`. There are some NA created under variables *close* and *unemployment rate* during merging datasets.  
+The dataset of pols-month contains `r dim(polmonth)[1]` rows and `r dim(polmonth)[2]` columns in total. The year ranged from `r min(pull(polmonth,year))` to `r max(pull(polmonth,year))`. The key variables that we used to merge (left join) is *year* and *month* (first by year, then by month). The variables *president* indicate if he/she is belong to republican and democratic. The dataset of snp contains `r dim(snp)[1]` rows and `r dim(snp)[2]` columns in total. The year ranged from `r min(pull(snp,year))` to `r max(pull(snp,year))`. Besides *year* and *month*, the variable *close* are also important because it indicates the closing values of the S&P stock index on the associated date. The dataset of unemployment contains `r dim(unemploy)[1]` rows and `r dim(unemploy)[2]` columns in total. The year ranged from `r min(pull(unemploy,year))` to `r max(pull(unemploy,year))`. the new variable *unemployment rate* is created to represent the values of percentage of unemployment. The final merged dataset contains `r dim(pol_merg_snp_merg_unemploy)[1]` rows and `r dim(pol_merg_snp_merg_unemploy)[2]` columns. The year ranged from `r min(pull(pol_merg_snp_merg_unemploy,year))` to ` r max(pull(pol_merg_snp_merg_unemploy,year))`. There are some NA created under variables *close* and *unemployment rate* during merging datasets.  
 
+# Problem 3
 ```{r}
 
 ```
