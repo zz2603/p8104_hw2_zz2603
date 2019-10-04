@@ -131,10 +131,84 @@ pol_merg_snp_merg_unemploy <- left_join(
 )
 ```
 ### paragraph
-The dataset of pols-month contains `r dim(polmonth)[1]` rows and `r dim(polmonth)[2]` columns in total. The year ranged from `r min(pull(polmonth,year))` to `r max(pull(polmonth,year))`. The key variables that we used to merge (left join) is *year* and *month* (first by year, then by month). The variables *president* indicate if he/she is belong to republican and democratic. The dataset of snp contains `r dim(snp)[1]` rows and `r dim(snp)[2]` columns in total. The year ranged from `r min(pull(snp,year))` to `r max(pull(snp,year))`. Besides *year* and *month*, the variable *close* are also important because it indicates the closing values of the S&P stock index on the associated date. The dataset of unemployment contains `r dim(unemploy)[1]` rows and `r dim(unemploy)[2]` columns in total. The year ranged from `r min(pull(unemploy,year))` to `r max(pull(unemploy,year))`. the new variable *unemployment rate* is created to represent the values of percentage of unemployment. The final merged dataset contains `r dim(pol_merg_snp_merg_unemploy)[1]` rows and `r dim(pol_merg_snp_merg_unemploy)[2]` columns. The year ranged from `r min(pull(pol_merg_snp_merg_unemploy,year))` to ` r max(pull(pol_merg_snp_merg_unemploy,year))`. There are some NA created under variables *close* and *unemployment rate* during merging datasets.  
+The dataset of pols-month contains `r dim(polmonth)[1]` rows and `r dim(polmonth)[2]` columns in total. The year ranged from `r min(pull(polmonth,year))` to `r max(pull(polmonth,year))`. The key variables that we used to merge (left join) is *year* and *month* (first by year, then by month). The variables *president* indicate if he/she is belong to republican and democratic. The dataset of snp contains `r dim(snp)[1]` rows and `r dim(snp)[2]` columns in total. The year ranged from `r min(pull(snp,year))` to `r max(pull(snp,year))`. Besides *year* and *month*, the variable *close* are also important because it indicates the closing values of the S&P stock index on the associated date. The dataset of unemployment contains `r dim(unemploy)[1]` rows and `r dim(unemploy)[2]` columns in total. The year ranged from `r min(pull(unemploy,year))` to `r max(pull(unemploy,year))`. the new variable *unemployment rate* is created to represent the values of percentage of unemployment. The final merged dataset contains `r dim(pol_merg_snp_merg_unemploy)[1]` rows and `r dim(pol_merg_snp_merg_unemploy)[2]` columns. The year ranged from `r min(pull(pol_merg_snp_merg_unemploy,year))` to `r max(pull(pol_merg_snp_merg_unemploy,year))`. There are some NA created under variables *close* and *unemployment rate* during merging datasets.The important variables includes presidents' party affiliation, number of governors and senators across different time period.    
 
 # Problem 3
 ```{r}
+pop_baby_name <- read_csv("./data/Popular_Baby_Names.csv")%>%
+  janitor::clean_names()
+
+## check how many differnt ethnicities it have
+pop_baby_name %>% 
+  group_by(ethnicity) %>% 
+  summarize(n=n())
+
+## there are lots of ethnicity names stands for same meaning but seems 
+## differnt.
+ethn <- pull(pop_baby_name,ethnicity)
+
+for (i in 1:length(ethn)) {
+  if (ethn[i]=="ASIAN AND PACI") {
+    ethn[i] <- paste0(ethn[i], "FIC ISLANDER")
+  } else if (ethn[i]=="BLACK NON HISP") {
+    ethn[i] <- paste0(ethn[i],"ANIC")
+  } else if (ethn[i]=="WHITE NON HISP") {
+    ethn[i] <- paste0(ethn[i],"ANIC")
+  }
+}
+
+pop_baby_name[,3] <- ethn
+
+## check the gender
+pop_baby_name %>% 
+  group_by(gender) %>% 
+  summarize(n=n())
+
+## standarized name of children to ALL CAPITAL letter
+childname <- pull(pop_baby_name,childs_first_name) %>% str_to_upper()
+pop_baby_name[,4] <- childname
+
+## remove all duplicated rows
+pop_baby_name <- distinct(pop_baby_name)
+
+## create "reader-friendly" table to show the rank in popularity of the name
+## “Olivia” as a female baby name over time. 
+pop_baby_name %>% 
+  filter(gender=="FEMALE"&childs_first_name=="OLIVIA") %>%
+  select(-count) %>% 
+  pivot_wider(
+    names_from = year_of_birth,
+    values_from = rank) %>% 
+  select(-c(gender,childs_first_name)) %>% 
+  knitr::kable()
+
+## create a similar table showing the most popular name among male children 
+## over time
+pop_baby_name %>% 
+  filter(gender=="MALE"&rank==1) %>%
+  select(-c(gender,count)) %>% 
+  pivot_wider(
+    names_from = year_of_birth,
+    values_from = childs_first_name) %>% 
+  select(-rank) %>% 
+  knitr::kable()
+
+## create a scatterplot showing the number of children with a name (y axis)
+## against the rank in popularity of that name (x axis) for male, white 
+## non-hispanic children born in 2016
+pop_baby_name %>% 
+  filter(gender=="MALE"&
+           ethnicity=="WHITE NON HISPANIC"&
+           year_of_birth==2016) %>% 
+  ggplot(aes(x=rank,y=count))+geom_point()+
+  labs(
+    title = "Rank of popularity vs. Number of children plot",
+    x = "the rank in popularity for male, white non-hispanic children born in 2016",
+    y = "the number of children",
+    caption = "Data from NYP Open Data"
+  )
+
+
 
 ```
 
